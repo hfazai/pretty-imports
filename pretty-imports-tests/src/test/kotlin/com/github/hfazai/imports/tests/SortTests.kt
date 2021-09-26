@@ -22,7 +22,7 @@ import com.github.hfazai.imports.sortImports
 
 import org.junit.Test
 
-class PrettyImportsTests {
+class SortTests {
   @Test
   fun `test sort imports`() {
     val imports =

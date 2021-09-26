@@ -13,11 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package com.github.hfazai.imports
 
-plugins {
-  kotlin("jvm") apply true
-}
+open class ImportConfiguration(
+  val order: List<String>,
+  val projectPath: String,
+  val excludes: String,
+  val trim: Boolean,
+  val languages: List<Language> = listOf(Language.ALL)
+)
 
-dependencies {
-  implementation("commons-io", "commons-io", "2.11.0")
-}
+object DefaultConfiguration : ImportConfiguration(
+  listOf("java", "javax", "kotlin"),
+  ".",
+  "build",
+  true
+)

@@ -15,6 +15,8 @@
  */
 package com.github.hfazai.imports
 
-open class SortConfiguration(val order: List<String>)
-
-object DefaultConfiguration : SortConfiguration(listOf("java", "javax", "kotlin"))
+enum class Language(val extension: String) {
+  ALL("*"),
+  KOTLIN("kt"),
+  JAVA("java")
+}

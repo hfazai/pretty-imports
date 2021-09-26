@@ -23,7 +23,13 @@ import org.apache.commons.io.filefilter.DirectoryFileFilter
 import org.apache.commons.io.filefilter.RegexFileFilter
 import org.apache.commons.io.FileUtils.listFiles
 
-fun sortImports(files: List<File>, configuration: ImportConfiguration) {
+fun prettify(configuration: ImportConfiguration) {
+  val sourceFiles = findSources(configuration)
+
+  sortImports(sourceFiles, configuration)
+}
+
+fun sortImports(files: MutableCollection<File>, configuration: ImportConfiguration) {
   files.forEach {
     val (oldContent, newLines, fileContents) = sortImportsInternal(it, configuration)
 

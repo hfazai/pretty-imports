@@ -34,11 +34,19 @@ fun sortImports(files: MutableCollection<File>, configuration: ImportConfigurati
     val (oldContent, newLines, fileContents) = sortImportsInternal(it, configuration)
 
     if(oldContent != newLines) {
-      val fileContents = fileContents.replace(oldContent, newLines)
+      val fileContents = fileContents.replaceImports(oldContent, newLines, configuration.trim)
       val writer = FileWriter(it)
       writer.append(fileContents)
       writer.flush()
     }
+  }
+}
+
+fun String.replaceImports(oldContent: String, newContent: String, trimmed: Boolean): String {
+  return if (trimmed) {
+    replace(oldContent, System.lineSeparator() + newContent + System.lineSeparator())
+  } else {
+    replace(oldContent, newContent)
   }
 }
 
@@ -57,10 +65,10 @@ fun sortImports(file: String, configuration: ImportConfiguration): String {
 }
 
 private fun sortImports(iterable: Iterator<String>, configuration: ImportConfiguration): String {
-  return sortImportsInternal(iterable, configuration).second
+  return sortImportsInternal(iterable, configuration).newImports
 }
 
-private fun sortImportsInternal(file: File, configuration: ImportConfiguration): Triple<String, String, String> {
+private fun sortImportsInternal(file: File, configuration: ImportConfiguration): Imports {
   val sc = Scanner(file)
   val sorted = sortImportsInternal(sc, configuration)
 
@@ -68,32 +76,41 @@ private fun sortImportsInternal(file: File, configuration: ImportConfiguration):
   return sorted
 }
 
-private fun sortImportsInternal(iterable: Iterator<String>, configuration: ImportConfiguration): Triple<String, String, String> {
+fun sortImportsInternal(iterable: Iterator<String>, configuration: ImportConfiguration): Imports {
   val fileContent = StringBuffer()
-  var oldContent = StringBuffer()
+  val oldContentBuffer = StringBuffer()
   val importsList = mutableListOf<String>()
-  var end = false
   var found = false
 
-  iterable.forEach { line ->
+  for (line in iterable) {
+    // Append line to file contents
     fileContent.append(line + System.lineSeparator())
-    if (!end && line.startsWith("import ")) {
-      importsList.add(line)
-      oldContent.append(line + System.lineSeparator())
-      found = true
-    } else if (!end && found && (line == System.lineSeparator() || line.trim() == "")) {
-      oldContent.append(line + System.lineSeparator())
-    }
 
-    if (found) {
-      if (!line.startsWith("import ") && !(line == System.lineSeparator() || line.trim() == "")) {
-        end = true
+    when {
+      line.trim().startsWith("import ") -> {
+        importsList.add(line.trim())
+        oldContentBuffer.append(line + System.lineSeparator())
+        found = true
+      }
+      !found && line.isNotBlank() -> {
+        oldContentBuffer.setLength(0)
+      }
+      !found -> {
+        oldContentBuffer.append(line + System.lineSeparator())
+      }
+      found && line.isBlank() -> {
+        oldContentBuffer.append(line + System.lineSeparator())
+      }
+      found && line.isNotBlank() -> {
+        break
       }
     }
   }
 
-  if (oldContent.isNotEmpty()) {
-    oldContent = oldContent.delete(oldContent.length - 1, oldContent.length)
+  val oldContent = if (!configuration.trim) {
+    oldContentBuffer.toString().trim()
+  } else {
+    oldContentBuffer.toString()
   }
 
   importsList.sortBy {
@@ -141,7 +158,7 @@ private fun sortImportsInternal(iterable: Iterator<String>, configuration: Impor
     }
   }
 
-  return Triple(oldContent.toString(), newContent, fileContent.toString())
+  return Imports(oldContent, newContent, fileContent.toString())
 }
 
 private fun findSources(configuration: ImportConfiguration): MutableCollection<File> {
@@ -158,3 +175,5 @@ private fun findSources(configuration: ImportConfiguration): MutableCollection<F
     DirectoryFileFilter.DIRECTORY
   )
 }
+
+data class Imports(val importsToReplace: String, val newImports: String, val fileContent: String)

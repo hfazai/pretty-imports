@@ -49,6 +49,7 @@ This library is extendable and will support many other languages in the future.
 - Allow configuration using json files.
 - Supporting as much as possible of programming languages.
 - Creating a gradle plugin to allow using pretty imports via gradle.
+- Using pretty imports from command line.
 
 ## Contributing
 All PRs are welcome. For feature requests and bug reports, please feel free to create an issue.

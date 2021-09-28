@@ -81,12 +81,22 @@ fun sortImportsInternal(iterable: Iterator<String>, configuration: Rule): Import
   val oldContentBuffer = StringBuffer()
   val importsList = mutableListOf<String>()
   var found = false
+  var end = false
 
-  for (line in iterable) {
+  while (iterable.hasNext()) {
+    val line = if (iterable is Scanner) {
+      iterable.nextLine()
+    } else {
+      iterable.next()
+    }
+
     // Append line to file contents
     fileContent.append(line + System.lineSeparator())
 
     when {
+      end -> {
+        continue
+      }
       line.trim().startsWith("import ") -> {
         importsList.add(line.trim())
         oldContentBuffer.append(line + System.lineSeparator())
@@ -102,7 +112,7 @@ fun sortImportsInternal(iterable: Iterator<String>, configuration: Rule): Import
         oldContentBuffer.append(line + System.lineSeparator())
       }
       found && line.isNotBlank() -> {
-        break
+        end = true
       }
     }
   }

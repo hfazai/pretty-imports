@@ -19,7 +19,7 @@ The configuration API allows to specify the order of imports, either you want to
 This is an example:
 
 ````KOTLIN
-val configuration = ImportConfiguration(
+val configuration = Rule(
   order = listOf("java", "javax", "kotlin", "com", "org"),
   trim = true,
   path = "path_to_project",
@@ -31,7 +31,7 @@ val configuration = ImportConfiguration(
 
 - Kotlin:
 ````KOTLIN
-val configuration = ImportConfiguration([params])
+val configuration = Rule([params])
 
 prettify(configuration)
 ````

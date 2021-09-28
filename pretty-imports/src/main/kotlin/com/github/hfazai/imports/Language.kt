@@ -16,7 +16,6 @@
 package com.github.hfazai.imports
 
 enum class Language(val extension: String) {
-  ALL("*"),
   KOTLIN("kt"),
   JAVA("java")
 }

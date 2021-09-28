@@ -23,13 +23,13 @@ import org.apache.commons.io.filefilter.DirectoryFileFilter
 import org.apache.commons.io.filefilter.RegexFileFilter
 import org.apache.commons.io.FileUtils.listFiles
 
-fun prettify(configuration: ImportConfiguration) {
+fun prettify(configuration: Rule) {
   val sourceFiles = findSources(configuration)
 
   sortImports(sourceFiles, configuration)
 }
 
-fun sortImports(files: MutableCollection<File>, configuration: ImportConfiguration) {
+fun sortImports(files: MutableCollection<File>, configuration: Rule) {
   files.forEach {
     val (oldContent, newLines, fileContents) = sortImportsInternal(it, configuration)
 
@@ -50,7 +50,7 @@ fun String.replaceImports(oldContent: String, newContent: String, trimmed: Boole
   }
 }
 
-fun sortImports(file: File, configuration: ImportConfiguration): String {
+fun sortImports(file: File, configuration: Rule): String {
   val sc = Scanner(file)
   val sorted = sortImports(sc, configuration)
 
@@ -58,17 +58,17 @@ fun sortImports(file: File, configuration: ImportConfiguration): String {
   return sorted
 }
 
-fun sortImports(file: String, configuration: ImportConfiguration): String {
+fun sortImports(file: String, configuration: Rule): String {
   val lines = file.lines()
 
   return sortImports(lines.iterator(), configuration)
 }
 
-private fun sortImports(iterable: Iterator<String>, configuration: ImportConfiguration): String {
+private fun sortImports(iterable: Iterator<String>, configuration: Rule): String {
   return sortImportsInternal(iterable, configuration).newImports
 }
 
-private fun sortImportsInternal(file: File, configuration: ImportConfiguration): Imports {
+private fun sortImportsInternal(file: File, configuration: Rule): Imports {
   val sc = Scanner(file)
   val sorted = sortImportsInternal(sc, configuration)
 
@@ -76,7 +76,7 @@ private fun sortImportsInternal(file: File, configuration: ImportConfiguration):
   return sorted
 }
 
-fun sortImportsInternal(iterable: Iterator<String>, configuration: ImportConfiguration): Imports {
+fun sortImportsInternal(iterable: Iterator<String>, configuration: Rule): Imports {
   val fileContent = StringBuffer()
   val oldContentBuffer = StringBuffer()
   val importsList = mutableListOf<String>()
@@ -161,7 +161,7 @@ fun sortImportsInternal(iterable: Iterator<String>, configuration: ImportConfigu
   return Imports(oldContent, newContent, fileContent.toString())
 }
 
-private fun findSources(configuration: ImportConfiguration): MutableCollection<File> {
+private fun findSources(configuration: Rule): MutableCollection<File> {
   val pathName = configuration.projectPath
   val pattern =
     configuration.languages

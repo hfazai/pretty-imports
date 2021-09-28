@@ -22,7 +22,7 @@ import com.github.hfazai.imports.sortImports
 import com.github.hfazai.imports.sortImportsInternal
 
 import org.junit.Test
-import com.github.hfazai.imports.ImportConfiguration
+import com.github.hfazai.imports.Rule
 import com.github.hfazai.imports.replaceImports
 
 class SortTests {
@@ -135,11 +135,11 @@ import javax.swing.JButton;
 import com.library.a.a;
 """
 
-    val sortConfiguration = ImportConfiguration(DefaultConfiguration.order,
-                                                DefaultConfiguration.projectPath,
-                                                DefaultConfiguration.excludes,
-                                                false,
-                                                DefaultConfiguration.languages)
+    val sortConfiguration = Rule(DefaultConfiguration.order,
+                                 DefaultConfiguration.projectPath,
+                                 DefaultConfiguration.excludes,
+                                 false,
+                                 DefaultConfiguration.languages)
     val prettyImports = sortImportsInternal(imports.lines().iterator(), sortConfiguration)
 
     assertEquals(trimmedImports, prettyImports.importsToReplace)

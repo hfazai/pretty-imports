@@ -15,15 +15,15 @@
  */
 package com.github.hfazai.imports
 
-open class ImportConfiguration(
+open class Rule(
   val order: List<String>,
   val projectPath: String,
   val excludes: String,
   val trim: Boolean,
-  val languages: List<Language> = listOf(Language.ALL)
+  val languages: Array<Language> = Language.values()
 )
 
-object DefaultConfiguration : ImportConfiguration(
+object DefaultConfiguration : Rule(
   listOf("java", "javax", "kotlin"),
   ".",
   "build",

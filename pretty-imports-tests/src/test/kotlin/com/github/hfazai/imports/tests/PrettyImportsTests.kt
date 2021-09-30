@@ -18,13 +18,14 @@ package com.github.hfazai.imports.tests
 import kotlin.test.assertEquals
 
 import com.github.hfazai.imports.DefaultConfiguration
+import com.github.hfazai.imports.Imports
 import com.github.hfazai.imports.Rule
 import com.github.hfazai.imports.prettifyImports
 import com.github.hfazai.imports.replaceImports
 
 import org.junit.Test
 
-class PrettyImportsTests {
+class PrettyImportsTests: ImportsTest() {
   @Test
   fun `test sort imports from same package prefix`() {
     val content =
@@ -40,7 +41,7 @@ import com.library.b.a;"""
     val sortConfiguration = DefaultConfiguration
     val prettyImports = prettifyImports(content, sortConfiguration)
 
-    assertEquals(sortedImports, prettyImports.newImports)
+    assertEquals(Imports(content, sortedImports, content), prettyImports)
   }
 
   @Test
@@ -60,7 +61,7 @@ import com.library.a.a;"""
     val sortConfiguration = DefaultConfiguration
     val prettyImports = prettifyImports(content, sortConfiguration)
 
-    assertEquals(sortedImports, prettyImports.newImports)
+    assertEquals(Imports(content, sortedImports, content), prettyImports)
   }
 
   @Test
@@ -81,7 +82,7 @@ import java.awt.Color;
 Class A 
 """
 
-    val sortedImports =
+    val oldImports =
       """
 
 import javax.swing.JButton;
@@ -96,7 +97,7 @@ import java.awt.Color;
     val sortConfiguration = DefaultConfiguration
     val prettyImports = prettifyImports(content, sortConfiguration)
 
-    assertEquals(sortedImports, prettyImports.importsToReplace)
+    assertEquals(oldImports, prettyImports.oldImports)
   }
 
   @Test
@@ -145,10 +146,10 @@ Class A
                                  false,
                                  DefaultConfiguration.languages)
     val prettyImports = prettifyImports(content, sortConfiguration)
-    val fileContents = content.replaceImports(prettyImports.importsToReplace, prettyImports.newImports, sortConfiguration.trim)
+    val fileContents = content.replaceImports(prettyImports.oldImports, prettyImports.newImports, sortConfiguration.trim)
 
 
-    assertEquals(trimmedImports, prettyImports.importsToReplace)
+    assertEquals(trimmedImports, prettyImports.oldImports)
     assertEquals(sortedImports, fileContents)
   }
 
@@ -185,7 +186,7 @@ Class A
 
     val sortConfiguration = DefaultConfiguration
     val prettyImports = prettifyImports(content, sortConfiguration)
-    val fileContents = content.replaceImports(prettyImports.importsToReplace, prettyImports.newImports, sortConfiguration.trim)
+    val fileContents = content.replaceImports(prettyImports.oldImports, prettyImports.newImports, sortConfiguration.trim)
 
     assertEquals(sortedImports, fileContents)
   }

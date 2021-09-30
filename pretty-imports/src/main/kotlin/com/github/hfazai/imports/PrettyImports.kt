@@ -153,7 +153,7 @@ private fun prettifyImportsInternal(iterable: Iterator<String>, configuration: R
     }
   }
 
-  return Imports(oldContent, newContent, fileContent.toString())
+  return Imports(oldContent, newContent, fileContent.removeSuffix(System.lineSeparator()).toString())
 }
 
 fun String.replaceImports(oldContent: String, newContent: String, trimmed: Boolean): String {
@@ -179,4 +179,4 @@ private fun findSources(configuration: Rule): MutableCollection<File> {
   )
 }
 
-data class Imports(val importsToReplace: String, val newImports: String, val fileContent: String)
+data class Imports(val oldImports: String, val newImports: String, val fileContent: String)

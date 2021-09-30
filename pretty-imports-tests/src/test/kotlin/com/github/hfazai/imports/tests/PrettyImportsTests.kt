@@ -18,59 +18,54 @@ package com.github.hfazai.imports.tests
 import kotlin.test.assertEquals
 
 import com.github.hfazai.imports.DefaultConfiguration
-import com.github.hfazai.imports.sortImports
-import com.github.hfazai.imports.sortImportsInternal
-
-import org.junit.Test
 import com.github.hfazai.imports.Rule
+import com.github.hfazai.imports.prettifyImports
 import com.github.hfazai.imports.replaceImports
 
-class SortTests {
+import org.junit.Test
+
+class PrettyImportsTests {
   @Test
   fun `test sort imports from same package prefix`() {
-    val imports =
+    val content =
       """import com.library.b.a;
 import com.library.a.a;
-import com.library.a.b;
-"""
+import com.library.a.b;"""
 
     val sortedImports =
       """import com.library.a.a;
 import com.library.a.b;
-import com.library.b.a;
-"""
+import com.library.b.a;"""
 
     val sortConfiguration = DefaultConfiguration
-    val prettyImports = sortImports(imports, sortConfiguration)
+    val prettyImports = prettifyImports(content, sortConfiguration)
 
-    assertEquals(sortedImports, prettyImports)
+    assertEquals(sortedImports, prettyImports.newImports)
   }
 
   @Test
   fun `test sort imports from different packages`() {
-    val imports =
+    val content =
       """import javax.swing.JButton;
 import com.library.a.a;
-import java.awt.Color;
-"""
+import java.awt.Color;"""
 
     val sortedImports =
       """import java.awt.Color;
 
 import javax.swing.JButton;
 
-import com.library.a.a;
-"""
+import com.library.a.a;"""
 
     val sortConfiguration = DefaultConfiguration
-    val prettyImports = sortImports(imports, sortConfiguration)
+    val prettyImports = prettifyImports(content, sortConfiguration)
 
-    assertEquals(sortedImports, prettyImports)
+    assertEquals(sortedImports, prettyImports.newImports)
   }
 
   @Test
   fun `test contents to be replaced`() {
-    val imports =
+    val content =
       """
 package
 
@@ -96,18 +91,17 @@ import java.awt.Color;
 
 
 
-
 """
 
     val sortConfiguration = DefaultConfiguration
-    val prettyImports = sortImportsInternal(imports.lines().iterator(), sortConfiguration)
+    val prettyImports = prettifyImports(content, sortConfiguration)
 
     assertEquals(sortedImports, prettyImports.importsToReplace)
   }
 
   @Test
   fun `test contents to be replaced without trimming`() {
-    val imports =
+    val content =
       """
 package
 
@@ -128,11 +122,21 @@ import com.library.a.a;
 import java.awt.Color;"""
 
     val sortedImports =
-      """import java.awt.Color;
+      """
+package
+
+
+import java.awt.Color;
 
 import javax.swing.JButton;
 
 import com.library.a.a;
+
+
+
+
+
+Class A 
 """
 
     val sortConfiguration = Rule(DefaultConfiguration.order,
@@ -140,10 +144,12 @@ import com.library.a.a;
                                  DefaultConfiguration.excludes,
                                  false,
                                  DefaultConfiguration.languages)
-    val prettyImports = sortImportsInternal(imports.lines().iterator(), sortConfiguration)
+    val prettyImports = prettifyImports(content, sortConfiguration)
+    val fileContents = content.replaceImports(prettyImports.importsToReplace, prettyImports.newImports, sortConfiguration.trim)
+
 
     assertEquals(trimmedImports, prettyImports.importsToReplace)
-    assertEquals(sortedImports, prettyImports.newImports)
+    assertEquals(sortedImports, fileContents)
   }
 
   @Test
@@ -178,7 +184,7 @@ Class A
 """
 
     val sortConfiguration = DefaultConfiguration
-    val prettyImports = sortImportsInternal(content.lines().iterator(), sortConfiguration)
+    val prettyImports = prettifyImports(content, sortConfiguration)
     val fileContents = content.replaceImports(prettyImports.importsToReplace, prettyImports.newImports, sortConfiguration.trim)
 
     assertEquals(sortedImports, fileContents)

@@ -26,14 +26,14 @@ import org.apache.commons.io.FileUtils.listFiles
 fun prettify(configuration: Rule) {
   val sourceFiles = findSources(configuration)
 
-  sortImports(sourceFiles, configuration)
+  prettifyImports(sourceFiles, configuration)
 }
 
-fun sortImports(files: MutableCollection<File>, configuration: Rule) {
+fun prettifyImports(files: MutableCollection<File>, configuration: Rule) {
   files.forEach {
-    val (oldContent, newLines, fileContents) = sortImportsInternal(it, configuration)
+    val (oldContent, newLines, fileContents) = prettifyImportsInternal(it, configuration)
 
-    if(oldContent != newLines) {
+    if (oldContent != newLines) {
       val fileContents = fileContents.replaceImports(oldContent, newLines, configuration.trim)
       val writer = FileWriter(it)
       writer.append(fileContents)
@@ -42,41 +42,21 @@ fun sortImports(files: MutableCollection<File>, configuration: Rule) {
   }
 }
 
-fun String.replaceImports(oldContent: String, newContent: String, trimmed: Boolean): String {
-  return if (trimmed) {
-    replace(oldContent, System.lineSeparator() + newContent + System.lineSeparator())
-  } else {
-    replace(oldContent, newContent)
-  }
+fun prettifyImports(fileContent: String, configuration: Rule): Imports {
+  val lines = fileContent.lines()
+
+  return prettifyImportsInternal(lines.iterator(), configuration)
 }
 
-fun sortImports(file: File, configuration: Rule): String {
+private fun prettifyImportsInternal(file: File, configuration: Rule): Imports {
   val sc = Scanner(file)
-  val sorted = sortImports(sc, configuration)
+  val sorted = prettifyImportsInternal(sc, configuration)
 
   sc.close()
   return sorted
 }
 
-fun sortImports(file: String, configuration: Rule): String {
-  val lines = file.lines()
-
-  return sortImports(lines.iterator(), configuration)
-}
-
-private fun sortImports(iterable: Iterator<String>, configuration: Rule): String {
-  return sortImportsInternal(iterable, configuration).newImports
-}
-
-private fun sortImportsInternal(file: File, configuration: Rule): Imports {
-  val sc = Scanner(file)
-  val sorted = sortImportsInternal(sc, configuration)
-
-  sc.close()
-  return sorted
-}
-
-fun sortImportsInternal(iterable: Iterator<String>, configuration: Rule): Imports {
+private fun prettifyImportsInternal(iterable: Iterator<String>, configuration: Rule): Imports {
   val fileContent = StringBuffer()
   val oldContentBuffer = StringBuffer()
   val importsList = mutableListOf<String>()
@@ -117,11 +97,12 @@ fun sortImportsInternal(iterable: Iterator<String>, configuration: Rule): Import
     }
   }
 
-  val oldContent = if (!configuration.trim) {
-    oldContentBuffer.toString().trim()
-  } else {
-    oldContentBuffer.toString()
-  }
+  val oldContent =
+    (if (!configuration.trim) {
+      oldContentBuffer.toString().trim()
+    } else {
+      oldContentBuffer.toString()
+    }).removeSuffix(System.lineSeparator())
 
   importsList.sortBy {
     it.removeSuffix(";")
@@ -156,7 +137,7 @@ fun sortImportsInternal(iterable: Iterator<String>, configuration: Rule): Import
   val newContent = buildString {
     var previous = res.firstOrNull()?.substring(0, res.first().indexOf("."))
 
-    res.forEachIndexed { _, line ->
+    res.forEachIndexed { index, line ->
       val beforeDot = line.substring(0, line.indexOf("."))
 
       if (previous != beforeDot) {
@@ -164,11 +145,23 @@ fun sortImportsInternal(iterable: Iterator<String>, configuration: Rule): Import
         previous = beforeDot
       }
 
-      append(line + System.lineSeparator())
+      if (index == res.size - 1) {
+        append(line)
+      } else {
+        append(line + System.lineSeparator())
+      }
     }
   }
 
   return Imports(oldContent, newContent, fileContent.toString())
+}
+
+fun String.replaceImports(oldContent: String, newContent: String, trimmed: Boolean): String {
+  return if (trimmed) {
+    replace(oldContent, System.lineSeparator() + newContent + System.lineSeparator())
+  } else {
+    replace(oldContent, newContent)
+  }
 }
 
 private fun findSources(configuration: Rule): MutableCollection<File> {

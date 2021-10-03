@@ -21,7 +21,6 @@ import com.github.hfazai.imports.DefaultConfiguration
 import com.github.hfazai.imports.Imports
 import com.github.hfazai.imports.Rule
 import com.github.hfazai.imports.prettifyImports
-import com.github.hfazai.imports.replaceImports
 
 import org.junit.Test
 
@@ -146,7 +145,7 @@ Class A
                                  false,
                                  DefaultConfiguration.languages)
     val prettyImports = prettifyImports(content, sortConfiguration)
-    val fileContents = content.replaceImports(prettyImports.oldImports, prettyImports.newImports, sortConfiguration.trim)
+    val fileContents = prettyImports.prettyFile(sortConfiguration)
 
 
     assertEquals(trimmedImports, prettyImports.oldImports)
@@ -186,7 +185,95 @@ Class A
 
     val sortConfiguration = DefaultConfiguration
     val prettyImports = prettifyImports(content, sortConfiguration)
-    val fileContents = content.replaceImports(prettyImports.oldImports, prettyImports.newImports, sortConfiguration.trim)
+    val fileContents = prettyImports.prettyFile(sortConfiguration)
+
+    assertEquals(sortedImports, fileContents)
+  }
+
+  @Test
+  fun `import word inside code shouldn't be considered as an import`() {
+    val content =
+      """
+package
+
+
+import javax.swing.JButton;
+import com.library.a.a;
+import java.awt.Color;
+
+
+
+
+
+Class A {
+    fun foo() {
+        import ("bar")
+    }
+}
+"""
+
+    val sortedImports =
+      """
+package
+
+import java.awt.Color;
+
+import javax.swing.JButton;
+
+import com.library.a.a;
+
+Class A {
+    fun foo() {
+        import ("bar")
+    }
+}
+"""
+
+    val prettyImports = prettifyImports(content, DefaultConfiguration)
+    val fileContents = prettyImports.prettyFile(DefaultConfiguration)
+
+    assertEquals(sortedImports, fileContents)
+  }
+
+  @Test
+  fun `imports with single-line comments`() {
+    val content =
+      """
+package
+
+
+import javax.swing.JButton;
+// comment on library a.a
+import com.library.a.a;
+// comment on java color
+ // An other comment
+import java.awt.Color;
+
+
+
+
+
+Class A
+"""
+
+    val sortedImports =
+      """
+package
+
+// comment on java color
+ // An other comment
+import java.awt.Color;
+
+import javax.swing.JButton;
+
+// comment on library a.a
+import com.library.a.a;
+
+Class A
+"""
+
+    val prettyImports = prettifyImports(content, DefaultConfiguration)
+    val fileContents = prettyImports.prettyFile(DefaultConfiguration)
 
     assertEquals(sortedImports, fileContents)
   }

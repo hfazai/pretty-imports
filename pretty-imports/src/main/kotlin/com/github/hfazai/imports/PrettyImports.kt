@@ -31,10 +31,10 @@ fun prettify(configuration: Rule) {
 
 fun prettifyImports(files: MutableCollection<File>, configuration: Rule) {
   files.forEach {
-    val (oldContent, newLines, fileContents) = prettifyImportsInternal(it, configuration)
+    val imports = prettifyImportsInternal(it, configuration)
 
-    if (oldContent != newLines) {
-      val fileContents = fileContents.replaceImports(oldContent, newLines, configuration.trim)
+    if (imports.hasChanged()) {
+      val fileContents = imports.prettyFile(configuration)
       val writer = FileWriter(it)
       writer.append(fileContents)
       writer.flush()
@@ -60,6 +60,8 @@ private fun prettifyImportsInternal(iterable: Iterator<String>, configuration: R
   val fileContent = StringBuffer()
   val oldContentBuffer = StringBuffer()
   val importsList = mutableListOf<String>()
+  val importSingleLineComments = mutableMapOf<String, MutableList<String>>()
+  var singleLineComments = mutableListOf<String>()
   var found = false
   var end = false
 
@@ -78,9 +80,15 @@ private fun prettifyImportsInternal(iterable: Iterator<String>, configuration: R
         continue
       }
       line.trim().startsWith("import ") -> {
-        importsList.add(line.trim())
+        val trimmedLine = line.trim()
+        importsList.add(trimmedLine)
         oldContentBuffer.append(line + System.lineSeparator())
         found = true
+
+        if (singleLineComments.isNotEmpty()) {
+          importSingleLineComments[trimmedLine] = singleLineComments
+          singleLineComments = mutableListOf()
+        }
       }
       !found && line.isNotBlank() -> {
         oldContentBuffer.setLength(0)
@@ -90,6 +98,10 @@ private fun prettifyImportsInternal(iterable: Iterator<String>, configuration: R
       }
       found && line.isBlank() -> {
         oldContentBuffer.append(line + System.lineSeparator())
+      }
+      found && line.trim().startsWith("//") -> {
+        oldContentBuffer.append(line + System.lineSeparator())
+        singleLineComments.add(line)
       }
       found && line.isNotBlank() -> {
         end = true
@@ -145,6 +157,13 @@ private fun prettifyImportsInternal(iterable: Iterator<String>, configuration: R
         previous = beforeDot
       }
 
+      val sLComments = importSingleLineComments[line]
+      if (sLComments?.isNotEmpty() == true) {
+        sLComments.forEach {
+          append(it + System.lineSeparator())
+        }
+      }
+
       if (index == res.size - 1) {
         append(line)
       } else {
@@ -154,14 +173,6 @@ private fun prettifyImportsInternal(iterable: Iterator<String>, configuration: R
   }
 
   return Imports(oldContent, newContent, fileContent.removeSuffix(System.lineSeparator()).toString())
-}
-
-fun String.replaceImports(oldContent: String, newContent: String, trimmed: Boolean): String {
-  return if (trimmed) {
-    replace(oldContent, System.lineSeparator() + newContent + System.lineSeparator())
-  } else {
-    replace(oldContent, newContent)
-  }
 }
 
 private fun findSources(configuration: Rule): MutableCollection<File> {
@@ -179,4 +190,17 @@ private fun findSources(configuration: Rule): MutableCollection<File> {
   )
 }
 
-data class Imports(val oldImports: String, val newImports: String, val fileContent: String)
+data class Imports(val oldImports: String, val newImports: String, val fileContent: String) {
+
+  fun prettyFile(configuration: Rule): String = replaceImports(configuration.trim)
+
+  fun hasChanged(): Boolean = oldImports != newImports
+
+  private fun replaceImports(trimmed: Boolean): String {
+    return if (trimmed) {
+      fileContent.replace(oldImports, System.lineSeparator() + newImports + System.lineSeparator())
+    } else {
+      fileContent.replace(oldImports, newImports)
+    }
+  }
+}
